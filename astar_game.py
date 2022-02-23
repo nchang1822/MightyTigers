@@ -362,8 +362,10 @@ def main():
 
     full_viz_states = []
     for i in range(len(path) - 1):
-        for j in range(100):
-            full_viz_states.append(path[i].state.Intermediate(path[i + 1].state, j/100))
+        dt = .1
+        diff = path[i+1].state.t - path[i].state.t
+        for j in range(int(diff/dt)):
+            full_viz_states.append(path[i].state.Intermediate(path[i + 1].state, j * dt/diff))
     full_viz_states.append(path[-1].state)
 
     for s in full_viz_states:
