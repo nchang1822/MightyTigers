@@ -6,232 +6,79 @@ from sklearn.neighbors import KDTree
 import matplotlib.pyplot as plt
 import time
 
+from code.obstacles import *
+from code.visuals import *
+from code.rrt_utils import *
+
+# Restrict dot movement + x, y, t domains
 vmax = 10
+tmax = 30
 (xmin, xmax) = (0, 14)
 (ymin, ymax) = (0, 10)
-tmax = 30
+
+# Define start and goal x, y
 (startx, starty) = (0, 4)
 (goalx,  goaly)  = (14, 5)
-obstacles = []
 
+# Grab obstacles for RRT run
+obstacles = obstacles_1()
+
+# Define parameters for RRT algo
 dstep = 1
-Nmax  = 1000
+Nmax  = 10000
 
-class Obstacle:
-    '''
-    Class for a moving circular obstacle
-    '''
-    def __init__(self, r, fx, fy):
-        self.r = r
-        self.fx = fx
-        self.fy = fy
-    def get_position(self, t):
-        return (self.fx(t), self.fy(t))
-
-obstacles.append(Obstacle(0.5, lambda t: 1, lambda t: 5 + 4.5 * np.sin(t)))
-obstacles.append(Obstacle(0.5, lambda t: 2, lambda t: 5 - 4.5 * np.sin(t)))
-obstacles.append(Obstacle(0.5, lambda t: 3, lambda t: 5 + 4.5 * np.sin(t)))
-obstacles.append(Obstacle(0.5, lambda t: 4, lambda t: 5 - 4.5 * np.sin(t)))
-obstacles.append(Obstacle(0.5, lambda t: 5, lambda t: 5 + 4.5 * np.sin(t)))
-obstacles.append(Obstacle(0.5, lambda t: 6, lambda t: 5 - 4.5 * np.sin(t)))
-obstacles.append(Obstacle(0.5, lambda t: 7, lambda t: 5 + 4.5 * np.sin(t)))
-obstacles.append(Obstacle(0.5, lambda t: 8, lambda t: 5 - 4.5 * np.sin(t)))
-obstacles.append(Obstacle(0.5, lambda t: 9, lambda t: 5 + 4.5 * np.sin(t)))
-obstacles.append(Obstacle(0.5, lambda t: 10, lambda t: 5 - 4.5 * np.sin(t)))
-obstacles.append(Obstacle(0.5, lambda t: 11, lambda t: 5 + 4.5 * np.sin(t)))
-obstacles.append(Obstacle(0.5, lambda t: 12, lambda t: 5 - 4.5 * np.sin(t)))
-obstacles.append(Obstacle(0.5, lambda t: 13, lambda t: 5 + 4.5 * np.sin(t)))
-
-class State:
-    def __init__(self, x, y, t):
-        self.x = x
-        self.y = y
-        self.t = t
-    def __repr__(self):
-        return ("<XY %5.2f,%5.2f @ %5.1f s>" %
-                (self.x, self.y, self.t))
-    def Draw(self, fig, **kwargs):
-        return
-    def InFreespace(self):
-        for obstacle in obstacles:
-            xpos, ypos = obstacle.get_position(self.t)
-            if np.sqrt((self.y - ypos)**2 + (self.x - xpos)**2) <= obstacle.r:
-                return False
-        return True
-
-    def Coordinates(self):
-        return (self.x, self.y)
-
-    def Distance(self, other):
-        return np.sqrt((other.x - self.x)**2 + (other.y - self.y)**2)
-
-    def DistSquared(self, other):
-        return ((self.x - other.x)**2 + (self.y - other.y)**2)
-
-    def TimeDistSquared(self, other):
-        return ((self.x - other.x)**2 + (self.y - other.y)**2 + (self.t - other.t)**2)
-
-    def Intermediate(self, other, alpha):
-        return State(self.x + alpha * (other.x - self.x),
-                     self.y + alpha * (other.y - self.y),
-                     self.t + alpha * (other.t - self.t))
-
-    def ConnectsTo(self, other):
-        if other.t < self.t:
-            return False
-        if np.sqrt((self.x - other.x)**2 +(self.y - other.y)**2)/ \
-                    (other.t - self.t) > vmax:
-            return False
-        for i in range(1,101):
-            if not self.Intermediate(other, i/100).InFreespace():
-                return False
-        return True
-
-    def ClosestStateOnGoalLine(self):
-        v = vmax
-        while v > 0:
-            arrival_t = (np.sqrt((self.x - goalx)**2 +(self.y - goaly)**2) / v) + self.t
-            if arrival_t < tmax:
-                goalstate = State(goalx, goaly, arrival_t)
-                return goalstate
-            v = v - .1
-        return None
-
-    def ConnectsToGoal(self):
-        v = vmax
-        while v > 0:
-            arrival_t = (np.sqrt((self.x - goalx)**2 +(self.y - goaly)**2) / v) + self.t
-            if arrival_t < tmax:
-                goalstate = State(goalx, goaly, arrival_t)
-                valid = True
-                for i in range(1,101):
-                    if not self.Intermediate(goalstate, i/100).InFreespace():
-                        valid = False
-                        break
-                if valid:
-                    return (True, goalstate)
-            v = v - .1
-        return (False, None)
-
-#
-#   Node class upon which to build the graph (roadmap) and which
-#   supports the A* search tree.
-#
-class Node:
-    def __init__(self, state, parentnode):
-        # Save the state matching this node.
-        self.state = state
-
-        # Link to parent for the tree structure.
-        self.parent = parentnode
-
-        # Automatically draw.
-        self.Draw('r-', linewidth=1)
-
-    # Draw a line to the parent.
-    def Draw(self, *args, **kwargs):
-        if self.parent is not None:
-            plt.quiver(
-                self.parent.state.x, self.parent.state.y,
-                self.state.x - self.parent.state.x,
-                self.state.y - self.parent.state.y,
-                scale_units='xy', angles='xy', scale=1, color=(self.state.t/tmax, 0, 0))
-            plt.pause(0.001)
-
-
-######################################################################
-#
-#   Visualization
-#
-class Visualization:
-    def __init__(self):
-        # Clear and show.
-        self.ClearFigure()
-        self.ShowFigure()
-
-    def ClearFigure(self):
-        # Clear the current, or create a new figure.
-        plt.clf()
-
-        # Create a new axes, enable the grid, and set axis limits.
-        plt.axes()
-        plt.grid(True)
-        plt.gca().axis('on')
-        plt.gca().set_xlim(xmin, xmax)
-        plt.gca().set_ylim(ymin, ymax)
-        plt.gca().set_aspect('equal')
-
-
-    def ShowFigure(self):
-        # Show the plot.
-        plt.pause(0.001)
-
-
-    def DrawState(self, state, *args, **kwargs):
-        plt.plot(state.x, state.y, *args, **kwargs)
-
-    def DrawLocalPath(self, head, tail, *args, **kwargs):
-        plt.plot((head.x, tail.x),
-                 (head.y, tail.y), *args, **kwargs)
-
-    def DrawObstacle(self, obstacle, t, *args, **kwargs):
-        x, y = obstacle.get_position(t)
-        circ = plt.Circle((x, y), obstacle.r)
-        plt.gca().add_patch(circ)
-
+visual_type = 2
 
 ######################################################################
 #
 #   RRT Functions
 #
-#   Again I am distiguishing state (containing x/y information) and
-#   node (containing tree structure/parent information).
-#
 def RRT(tree, goalstate, Nmax):
     # Loop.
     while True:
-        # Determine the target state.
-        # 5% of time go directly for goal
+        # Determine the target state. 5% of time go for goal line
         target_coin = random.uniform(0, 1)
         if target_coin <= 0.05:
             # Go for the goal line. Start by finding the
-            # closest node to the goal line in x, y, t space
+            # closest node to the goal line in x, y space.
+            # We will determine arrival time later.
             targetstate = goalstate
-            list = [(node.state.DistSquared(goalstate), node) for node in tree]
+            list = [(node.state.XY_DistSquared(targetstate), node) for node in tree]
         else:
-            # Go for a random node. Find the closest node to the new node
-            # in x, y, t space
+            # Go for a random node.
             x = random.uniform(xmin, xmax)
             y = random.uniform(ymin, ymax)
             t = random.uniform(0, tmax)
-            targetstate = State(x,y,t)
-            list = [(node.state.TimeDistSquared(targetstate), node) for node in tree]
+            targetstate = State(x, y, t)
+            # Find the closest node to the new node
+            # in x, y, t space
+            list = [(node.state.XYT_DistSquared(targetstate), node) for node in tree]
 
+        # Get nearest node to target, and distance between the two
         (d2, nearnode)  = min(list)
         d = np.sqrt(d2)
         nearstate = nearnode.state
 
-        # If going for goal line, make sure that the target state
-        # is the clostest reachable state on the goal line (as determined
-        # by vmax)
+        # If going for goal line, we need to determine the soonest possible time
+        # we can reach the goal line from our nearest state. This is related to
+        # vmax.
         if targetstate == goalstate:
-            targetstate = nearstate.ClosestStateOnGoalLine()
+            targetstate = nearstate.ClosestStateOnGoalLine(goalstate, tmax, vmax)
 
         # Determine the next state, a step size (dstep) away
-        alpha = min(dstep / np.sqrt(nearstate.DistSquared(targetstate)), 1)
-
+        alpha = min(dstep / np.sqrt(nearstate.XY_DistSquared(targetstate)), 1)
         nextstate = nearstate.Intermediate(targetstate, alpha)
 
         # Check whether to attach (creating a new node).
-        if nearstate.ConnectsTo(nextstate):
-            nextnode = Node(nextstate, nearnode)
+        if nearstate.ConnectsTo(nextstate, vmax, obstacles):
+            nextnode = Node(nextstate, nearnode, nearnode.viz, nearnode.viz_type)
             tree.append(nextnode)
 
             # Also try to connect the goal.
-            if np.sqrt(nextstate.DistSquared(goalstate)) < dstep:
-                result = nextstate.ConnectsToGoal()
+            if np.sqrt(nextstate.XY_DistSquared(goalstate)) < dstep:
+                result = nextstate.ConnectsToGoal(goalstate, tmax, vmax, obstacles)
                 if result[0]:
-                    goalnode = Node(result[1], nextnode)
+                    goalnode = Node(result[1], nextnode, nearnode.viz, nearnode.viz_type)
                     tree.append(goalnode)
                     return(goalnode)
 
@@ -246,21 +93,22 @@ def main():
     # Report the parameters.
     print('Running with step size ', dstep, ' and up to ', Nmax, ' nodes.')
 
-    # Create the figure.
-    Visual = Visualization()
-
     # Create the start/goal nodes.
     startstate = State(startx, starty, 0)
     goalstate  = State(goalx,  goaly, tmax)
 
-    # Show the start/goal states.
-    Visual.DrawState(startstate, 'ro')
-    Visual.DrawState(goalstate,  'ro')
-    Visual.ShowFigure()
+    if visual_type == 2:
+        Visual = Visualization_2D(xmin, xmax, ymin, ymax)
+        Visual.DrawState(startstate, 'ro')
+        Visual.DrawState(goalstate,  'ro')
+        Visual.ShowFigure()
+    elif visual_type == 3:
+        Visual = Visualization_3D((startx, starty), (goalx, goaly), tmax)
+        Visual.DrawConfigSpace(obstacles)
     input("Showing basic world (hit return to continue)")
 
     # Start the tree with the start state and no parent.
-    tree = [Node(startstate, None)]
+    tree = [Node(startstate, None, Visual, visual_type)]
 
     # Execute the search (return the goal leaf node).
     node = RRT(tree, goalstate, Nmax)
@@ -278,35 +126,10 @@ def main():
         node = node.parent
 
     # Show the path.
-    for i in range(len(path)):
-        Visual.ClearFigure()
-        Visual.DrawState(startstate, 'bo')
-        Visual.DrawState(goalstate,  'bo')
+    Visual.DrawDiscretePath(startstate, goalstate, path, obstacles)
 
-        Visual.DrawState(path[i].state, 'ro', linewidth=1)
-
-        for obstacle in obstacles:
-            Visual.DrawObstacle(obstacle, path[i].state.t)
-
-        Visual.ShowFigure()
-        input("Showing the PATH(hit return to continue)")
-
-    full_viz_states = []
-    for i in range(len(path) - 1):
-        dt = .05
-        diff = path[i+1].state.t - path[i].state.t
-        for j in range(int(diff/dt)):
-            full_viz_states.append(path[i].state.Intermediate(path[i + 1].state, j * dt/diff))
-    full_viz_states.append(path[-1].state)
-
-    for s in full_viz_states:
-        Visual.ClearFigure()
-        Visual.DrawState(startstate, 'bo')
-        Visual.DrawState(goalstate,  'bo')
-        Visual.DrawState(s, 'ro', linewidth=1)
-        for obstacle in obstacles:
-            Visual.DrawObstacle(obstacle, s.t)
-        Visual.ShowFigure()
+    # Collect and show a continuous time path
+    Visual.DrawContinuousPath(startstate, goalstate, path, obstacles)
 
     input("Showing the raw path (hit return to continue)")
 
