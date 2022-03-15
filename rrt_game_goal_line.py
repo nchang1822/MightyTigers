@@ -21,11 +21,12 @@ tmax = 30
 (goalx,  goaly)  = (14, 5)
 
 # Grab obstacles for RRT run
-obstacles = obstacles_1()
+obstacles = obstacles_2()
 
 # Define parameters for RRT algo
 dstep = 1
 Nmax  = 10000
+goal_prob = 0.25
 
 visual_type = 2
 
@@ -38,7 +39,7 @@ def RRT(tree, goalstate, Nmax):
     while True:
         # Determine the target state. 5% of time go for goal line
         target_coin = random.uniform(0, 1)
-        if target_coin <= 0.05:
+        if target_coin < goal_prob:
             # Go for the goal line. Start by finding the
             # closest node to the goal line in x, y space.
             # We will determine arrival time later.
@@ -50,9 +51,10 @@ def RRT(tree, goalstate, Nmax):
             y = random.uniform(ymin, ymax)
             t = random.uniform(0, tmax)
             targetstate = State(x, y, t)
+
             # Find the closest node to the new node
             # in x, y, t space
-            list = [(node.state.XYT_DistSquared(targetstate), node) for node in tree]
+            list = [(node.state.XYT_DistSquared(targetstate, vmax), node) for node in tree]
 
         # Get nearest node to target, and distance between the two
         (d2, nearnode)  = min(list)
@@ -64,6 +66,10 @@ def RRT(tree, goalstate, Nmax):
         # vmax.
         if targetstate == goalstate:
             targetstate = nearstate.ClosestStateOnGoalLine(goalstate, tmax, vmax)
+            # If we were not able to reach the goal line in time
+            # restart from beginning of loop
+            if targetstate == None:
+                continue
 
         # Determine the next state, a step size (dstep) away
         alpha = min(dstep / np.sqrt(nearstate.XY_DistSquared(targetstate)), 1)
@@ -85,6 +91,48 @@ def RRT(tree, goalstate, Nmax):
         # Check whether we should abort (tree has gotten too large).
         if (len(tree) >= Nmax):
             return None
+
+def PostProcess(path, viz):
+    new_path = []
+    # Skip strategy
+    i = 0
+    new_path = [path[0]]
+
+    while i < len(path) - 1:
+        j = len(path) - 1
+        while i < j:
+            if path[i].state.ConnectsTo(path[j].state, vmax, obstacles):
+                new_path.append(path[j])
+                i = j
+            else:
+                j -= 1
+
+    if visual_type == 2:
+        viz.ClearFigure()
+        for i in range(1, len(path)):
+            parent = path[i - 1]
+            curr = path[i]
+            plt.quiver(
+                parent.state.x, parent.state.y,
+                curr.state.x - parent.state.x,
+                curr.state.y - parent.state.y,
+                scale_units='xy', angles='xy', scale=1, color=(curr.state.t/30, 0, 0))
+
+        for i in range(1, len(new_path)):
+            parent = new_path[i - 1]
+            curr = new_path[i]
+            plt.quiver(
+                parent.state.x, parent.state.y,
+                curr.state.x - parent.state.x,
+                curr.state.y - parent.state.y,
+                scale_units='xy', angles='xy', scale=1, color=(0, curr.state.t/30, 0))
+
+        # plt.plot([n.state.x for n in path], [n.state.y for n in path])
+        # plt.plot([n.state.x for n in new_path], [n.state.y for n in new_path])
+        viz.ShowFigure()
+        input("Showing post processed path")
+
+    return new_path
 
 #
 #  Main Code
@@ -124,6 +172,10 @@ def main():
     while node.parent is not None:
         path.insert(0, node)
         node = node.parent
+    path.insert(0, node)
+
+    # Post process path
+    path = PostProcess(path, Visual)
 
     # Show the path.
     Visual.DrawDiscretePath(startstate, goalstate, path, obstacles)
