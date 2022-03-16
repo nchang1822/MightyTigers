@@ -6,44 +6,19 @@ from sklearn.neighbors import KDTree
 import matplotlib.pyplot as plt
 import time
 
+from code.obstacles import *
+from code.visuals import *
+
 vmax = 10
 (xmin, xmax) = (0, 14)
 (ymin, ymax) = (0, 10)
 tmax = 30
 (startx, starty) = (0, 4)
 (goalx,  goaly)  = (14, 5)
-obstacles = []
+obstacles = obstacles_1()
 
 N = 200
 K = 40
-
-class Obstacle:
-    '''
-    Class for a moving circular obstacle
-    '''
-    def __init__(self, r, fx, fy):
-        self.r = r
-        self.fx = fx
-        self.fy = fy
-    def get_position(self, t):
-        return (self.fx(t), self.fy(t))
-
-obstacles.append(Obstacle(0.5, lambda t: 1, lambda t: 5 + 4.5 * np.sin(t)))
-obstacles.append(Obstacle(0.5, lambda t: 2, lambda t: 5 - 4.5 * np.sin(t)))
-obstacles.append(Obstacle(0.5, lambda t: 3, lambda t: 5 + 4.5 * np.sin(t)))
-obstacles.append(Obstacle(0.5, lambda t: 4, lambda t: 5 - 4.5 * np.sin(t)))
-obstacles.append(Obstacle(0.5, lambda t: 5, lambda t: 5 + 4.5 * np.sin(t)))
-obstacles.append(Obstacle(0.5, lambda t: 6, lambda t: 5 - 4.5 * np.sin(t)))
-obstacles.append(Obstacle(0.5, lambda t: 7, lambda t: 5 + 4.5 * np.sin(t)))
-obstacles.append(Obstacle(0.5, lambda t: 8, lambda t: 5 - 4.5 * np.sin(t)))
-obstacles.append(Obstacle(0.5, lambda t: 9, lambda t: 5 + 4.5 * np.sin(t)))
-obstacles.append(Obstacle(0.5, lambda t: 10, lambda t: 5 - 4.5 * np.sin(t)))
-obstacles.append(Obstacle(0.5, lambda t: 11, lambda t: 5 + 4.5 * np.sin(t)))
-obstacles.append(Obstacle(0.5, lambda t: 12, lambda t: 5 - 4.5 * np.sin(t)))
-obstacles.append(Obstacle(0.5, lambda t: 13, lambda t: 5 + 4.5 * np.sin(t)))
-
-
-
 
 class State:
     def __init__(self, x, y, t):
@@ -69,12 +44,13 @@ class State:
         return np.sqrt((other.x - self.x)**2 + (other.y - self.y)**2)
 
     def TimeDist(self, other):
-        return np.sqrt((self.x - other.x)**2 + (self.y - other.y)**2 + (self.t - other.t)**2)
+        return np.sqrt((self.x - other.x)**2 + (self.y - other.y)**2 + ((self.t - other.t)*vmax)**2)
 
     def Intermediate(self, other, alpha):
         return State(self.x + alpha * (other.x - self.x),
                      self.y + alpha * (other.y - self.y),
                      self.t + alpha * (other.t - self.t))
+
     def MinTimeToCoord(self, other):
         return self.t + self.Distance(other)/vmax
 
@@ -88,6 +64,14 @@ class State:
             if not self.Intermediate(other, i/100).InFreespace():
                 return False
         return True
+
+    def GetShortestConnection(self, other):
+        for i in np.linspace(self.t, other.t, num = 100):
+            new = State(other.x, other.y, i)
+            if self.ConnectsTo(new):
+                return new
+        return other
+
 
 #
 #   Node class upon which to build the graph (roadmap) and which
@@ -178,10 +162,13 @@ def AStar(nodeList, start, goal):
 
         # Declare this node done.
         node.done = True
+        if node.state.x == goal.state.x and node.state.y == goal.state.y:
+            goal.done = True
+            goal = node
 
         # Check whether we have processed the goal (now done).
         if (goal.done):
-            goal.state.t = goal.treeparent.state.MinTimeToCoord(goal.state)
+            # goal.state.t = goal.treeparent.state.MinTimeToCoord(goal.state)
             print("Reached goal in {} seconds".format(goal.state.t))
             break
 
@@ -196,51 +183,6 @@ def AStar(nodeList, start, goal):
 
     # Return the path.
     return path
-
-######################################################################
-#
-#   Visualization
-#
-class Visualization:
-    def __init__(self):
-        # Clear and show.
-        self.ClearFigure()
-        self.ShowFigure()
-
-    def ClearFigure(self):
-        # Clear the current, or create a new figure.
-        plt.clf()
-
-        # Create a new axes, enable the grid, and set axis limits.
-        plt.axes()
-        plt.grid(True)
-        plt.gca().axis('on')
-        plt.gca().set_xlim(xmin, xmax)
-        plt.gca().set_ylim(ymin, ymax)
-        plt.gca().set_aspect('equal')
-
-
-    def ShowFigure(self):
-        # Show the plot.
-        plt.pause(0.001)
-
-
-    def DrawState(self, state, *args, **kwargs):
-        plt.plot(state.x, state.y, color = (state.t/tmax, 0.1, 0.1), *args, **kwargs)
-
-    def DrawLocalPath(self, head, tail, *args, **kwargs):
-        plt.plot((head.x, tail.x),
-                 (head.y, tail.y), *args, **kwargs)
-        # plt.quiver(
-        #     head.x, head.y,
-        #     tail.x - head.x,
-        #     tail.y - head.y,
-        #     scale_units='xy', angles='xy', scale=1,width = 0.001, headwidth = 100, color='g')
-
-    def DrawObstacle(self, obstacle, t, *args, **kwargs):
-        x, y = obstacle.get_position(t)
-        circ = plt.Circle((x, y), obstacle.r)
-        plt.gca().add_patch(circ)
 
 
 ######################################################################
@@ -263,7 +205,7 @@ def AddNodesToList(nodeList, N):
 #
 #   Connect the nearest neighbors
 #
-def ConnectNearestNeighbors(nodeList, K):
+def ConnectNearestNeighbors(nodeList, K, goalnode):
     # Clear any existing neighbors.
     for node in nodeList:
         node.children = []
@@ -280,24 +222,31 @@ def ConnectNearestNeighbors(nodeList, K):
     # being itself.
     for i, nbrs in enumerate(idx):
         for n in nbrs[1:]:
-            if nodeList[i].state.ConnectsTo(nodeList[n].state):
+            if nodeList[n].state == goalnode.state:
+                newgoal = nodeList[i].state.GetShortestConnection(goalnode.state)
+                if nodeList[i].state.ConnectsTo(newgoal):
+                    newnode = Node(newgoal)
+                    nodeList[i].children.append(newnode)
+                    newnode.parents.append(nodeList[i])
+
+            elif nodeList[i].state.ConnectsTo(nodeList[n].state):
                 nodeList[i].children.append(nodeList[n])
                 nodeList[n].parents.append(nodeList[i])
 
 #
 #  Post Process the Path
 #
-# def PostProcess(path):
-#     i = 0
-#     j = 2
-#     while j < len(path):
-#         s1 = path[i].state
-#         s2 = path[j].state
-#         if s1.ConnectsTo(s2):
-#             path.pop(j-1)
-#         else:
-#             i += 1
-#             j += 1
+def PostProcess(path):
+    i = 0
+    j = 2
+    while j < len(path):
+        s1 = path[i].state
+        s2 = path[j].state
+        if s1.ConnectsTo(s2):
+            path.pop(j-1)
+        else:
+            i += 1
+            j += 1
 ######################################################################
 #
 #  Main Code
@@ -309,7 +258,7 @@ def main():
     print('Running with ', N, ' nodes and ', K, ' neighbors.')
 
     # Create the figure.
-    Visual = Visualization()
+    Visual = Visualization_astar(xmin, xmax, ymin, ymax, tmax)
 
     # Create the start/goal nodes.
     startnode = Node(State(startx, starty, 0))
@@ -341,7 +290,7 @@ def main():
 
     # Connect to the nearest neighbors.
     start = time.time()
-    ConnectNearestNeighbors(nodeList, K)
+    ConnectNearestNeighbors(nodeList, K, goalnode)
     print('Connecting took ', time.time() - start)
 
     # Show the neighbor connections.
@@ -394,14 +343,35 @@ def main():
     input("Showing the raw path (hit return to continue)")
 
 
+    for i in range(len(path)-1):
+        Visual.DrawLocalPath(path[i].state, path[i+1].state, 'r-', linewidth=2)
+    Visual.ShowFigure()
     # Post Process the path.
-    # PostProcess(path)
+    PostProcess(path)
 
     # Show the post-processed path.
-    # for i in range(len(path)-1):
-    #     Visual.DrawLocalPath(path[i].state, path[i+1].state, 'b-', linewidth=2)
-    # Visual.ShowFigure()
-    # input("Showing the post-processed path (hit return to continue)")
+    for i in range(len(path)-1):
+        Visual.DrawLocalPath(path[i].state, path[i+1].state, 'b-', linewidth=2)
+    Visual.ShowFigure()
+    input("Showing the post-processed path (hit return to continue)")
+
+    full_viz_states = []
+    for i in range(len(path) - 1):
+        dt = .1
+        diff = path[i+1].state.t - path[i].state.t
+        for j in range(int(diff/dt)):
+            full_viz_states.append(path[i].state.Intermediate(path[i + 1].state, j * dt/diff))
+    full_viz_states.append(path[-1].state)
+
+    for s in full_viz_states:
+        Visual.ClearFigure()
+        Visual.DrawState(startnode.state, 'bo')
+        Visual.DrawState(goalnode.state,  'bo')
+        Visual.DrawState(s, 'ro', linewidth=1)
+        for obstacle in obstacles:
+            Visual.DrawObstacle(obstacle, s.t)
+        Visual.ShowFigure()
+    input("Show the post-processed path")
 
 
 if __name__== "__main__":

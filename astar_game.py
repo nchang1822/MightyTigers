@@ -6,44 +6,19 @@ from sklearn.neighbors import KDTree
 import matplotlib.pyplot as plt
 import time
 
+from code.obstacles import *
+from code.visuals import *
+
 vmax = 10
 (xmin, xmax) = (0, 14)
 (ymin, ymax) = (0, 10)
 tmax = 30
 (startx, starty) = (0, 4)
 (goalx,  goaly)  = (14, 5)
-obstacles = []
+obstacles = obstacles_1()
 
 N = 200
 K = 40
-
-class Obstacle:
-    '''
-    Class for a moving circular obstacle
-    '''
-    def __init__(self, r, fx, fy):
-        self.r = r
-        self.fx = fx
-        self.fy = fy
-    def get_position(self, t):
-        return (self.fx(t), self.fy(t))
-
-obstacles.append(Obstacle(0.5, lambda t: 1, lambda t: 5 + 4.5 * np.sin(t)))
-obstacles.append(Obstacle(0.5, lambda t: 2, lambda t: 5 - 4.5 * np.sin(t)))
-obstacles.append(Obstacle(0.5, lambda t: 3, lambda t: 5 + 4.5 * np.sin(t)))
-obstacles.append(Obstacle(0.5, lambda t: 4, lambda t: 5 - 4.5 * np.sin(t)))
-obstacles.append(Obstacle(0.5, lambda t: 5, lambda t: 5 + 4.5 * np.sin(t)))
-obstacles.append(Obstacle(0.5, lambda t: 6, lambda t: 5 - 4.5 * np.sin(t)))
-obstacles.append(Obstacle(0.5, lambda t: 7, lambda t: 5 + 4.5 * np.sin(t)))
-obstacles.append(Obstacle(0.5, lambda t: 8, lambda t: 5 - 4.5 * np.sin(t)))
-obstacles.append(Obstacle(0.5, lambda t: 9, lambda t: 5 + 4.5 * np.sin(t)))
-obstacles.append(Obstacle(0.5, lambda t: 10, lambda t: 5 - 4.5 * np.sin(t)))
-obstacles.append(Obstacle(0.5, lambda t: 11, lambda t: 5 + 4.5 * np.sin(t)))
-obstacles.append(Obstacle(0.5, lambda t: 12, lambda t: 5 - 4.5 * np.sin(t)))
-obstacles.append(Obstacle(0.5, lambda t: 13, lambda t: 5 + 4.5 * np.sin(t)))
-
-
-
 
 class State:
     def __init__(self, x, y, t):
@@ -188,46 +163,6 @@ def AStar(nodeList, start, goal):
     # Return the path.
     return path
 
-######################################################################
-#
-#   Visualization
-#
-class Visualization:
-    def __init__(self):
-        # Clear and show.
-        self.ClearFigure()
-        self.ShowFigure()
-
-    def ClearFigure(self):
-        # Clear the current, or create a new figure.
-        plt.clf()
-
-        # Create a new axes, enable the grid, and set axis limits.
-        plt.axes()
-        plt.grid(True)
-        plt.gca().axis('on')
-        plt.gca().set_xlim(xmin, xmax)
-        plt.gca().set_ylim(ymin, ymax)
-        plt.gca().set_aspect('equal')
-
-
-    def ShowFigure(self):
-        # Show the plot.
-        plt.pause(0.001)
-
-
-    def DrawState(self, state, *args, **kwargs):
-        plt.plot(state.x, state.y, *args, **kwargs)
-
-    def DrawLocalPath(self, head, tail, *args, **kwargs):
-        plt.plot((head.x, tail.x),
-                 (head.y, tail.y), *args, **kwargs)
-
-    def DrawObstacle(self, obstacle, t, *args, **kwargs):
-        x, y = obstacle.get_position(t)
-        circ = plt.Circle((x, y), obstacle.r)
-        plt.gca().add_patch(circ)
-
 
 ######################################################################
 #
@@ -295,7 +230,7 @@ def main():
     print('Running with ', N, ' nodes and ', K, ' neighbors.')
 
     # Create the figure.
-    Visual = Visualization()
+    Visual = Visualization_astar(xmin, xmax, ymin, ymax, tmax)
 
     # Create the start/goal nodes.
     startnode = Node(State(startx, starty, 0))

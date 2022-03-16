@@ -165,3 +165,53 @@ class Visualization_3D:
 
             p = self.DrawState(s, 'ro', linewidth=1)
             self.ShowFigure()
+
+######################################################################
+#
+#   Visualization
+#
+class Visualization_astar:
+    def __init__(self, xmin, xmax, ymin, ymax, tmax):
+        self.xmin = xmin
+        self.xmax = xmax
+        self.ymin = ymin
+        self.ymax = ymax
+        self.tmax = tmax
+        # Clear and show.
+        self.ClearFigure()
+        self.ShowFigure()
+
+    def ClearFigure(self):
+        # Clear the current, or create a new figure.
+        plt.clf()
+
+        # Create a new axes, enable the grid, and set axis limits.
+        plt.axes()
+        plt.grid(True)
+        plt.gca().axis('on')
+        plt.gca().set_xlim(self.xmin, self.xmax)
+        plt.gca().set_ylim(self.ymin, self.ymax)
+        plt.gca().set_aspect('equal')
+
+
+    def ShowFigure(self):
+        # Show the plot.
+        plt.pause(0.001)
+
+
+    def DrawState(self, state, *args, **kwargs):
+        plt.plot(state.x, state.y, color = (state.t/self.tmax, 0.1, 0.1), *args, **kwargs)
+
+    def DrawLocalPath(self, head, tail, *args, **kwargs):
+        plt.plot((head.x, tail.x),
+                 (head.y, tail.y), *args, **kwargs)
+        # plt.quiver(
+        #     head.x, head.y,
+        #     tail.x - head.x,
+        #     tail.y - head.y,
+        #     scale_units='xy', angles='xy', scale=1,width = 0.001, headwidth = 100, color='g')
+
+    def DrawObstacle(self, obstacle, t, *args, **kwargs):
+        x, y = obstacle.get_position(t)
+        circ = plt.Circle((x, y), obstacle.r)
+        plt.gca().add_patch(circ)
