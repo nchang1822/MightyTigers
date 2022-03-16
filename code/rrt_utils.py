@@ -21,8 +21,8 @@ class State:
     def XY_DistSquared(self, other):
         return ((self.x - other.x)**2 + (self.y - other.y)**2)
 
-    def XYT_DistSquared(self, other):
-        return ((self.x - other.x)**2 + (self.y - other.y)**2 + (self.t - other.t)**2)
+    def XYT_DistSquared(self, other, vmax):
+        return ((self.x - other.x)**2 + (self.y - other.y)**2 + (1 / vmax**2) * (self.t - other.t)**2)
 
     def Intermediate(self, other, alpha):
         return State(self.x + alpha * (other.x - self.x),

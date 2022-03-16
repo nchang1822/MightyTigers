@@ -27,3 +27,83 @@ def obstacles_1():
     obstacles.append(Obstacle(0.5, lambda t: 12, lambda t: 5 - 4.5 * np.sin(t)))
     obstacles.append(Obstacle(0.5, lambda t: 13, lambda t: 5 + 4.5 * np.sin(t)))
     return obstacles
+
+def obstacles_2():
+    obstacles = []
+
+    # Bottom row
+    obstacles.append(Obstacle(1/2, lambda t: 2 + 1/2 * np.cos(t), lambda t: 2 + 1/2 * np.sin(t)))
+    obstacles.append(Obstacle(1/2, lambda t: 2 + 1/2 * np.cos(t + np.pi), lambda t: 2 + 1/2 * np.sin(t + np.pi)))
+
+    obstacles.append(Obstacle(1/2, lambda t: 2 + 1/2 * np.cos(t), lambda t: 4 + 1/2 * np.sin(t)))
+    obstacles.append(Obstacle(1/2, lambda t: 2 + 1/2 * np.cos(t + np.pi), lambda t: 4 + 1/2 * np.sin(t + np.pi)))
+
+    obstacles.append(Obstacle(1/2, lambda t: 4 + 1/2 * np.cos(t + np.pi/2), lambda t: 2 + 1/2 * np.sin(t + np.pi/2)))
+    obstacles.append(Obstacle(1/2, lambda t: 4 + 1/2 * np.cos(t + 3 * np.pi / 2), lambda t: 2 + 1/2 * np.sin(t + 3 * np.pi / 2)))
+
+    obstacles.append(Obstacle(1/2, lambda t: 4 + 1/2 * np.cos(t + np.pi/2), lambda t: 4 + 1/2 * np.sin(t + np.pi/2)))
+    obstacles.append(Obstacle(1/2, lambda t: 4 + 1/2 * np.cos(t + 3 * np.pi / 2), lambda t: 4 + 1/2 * np.sin(t + 3 * np.pi / 2)))
+
+    obstacles.append(Obstacle(1/2, lambda t: 6 + 1/2 * np.cos(t), lambda t: 2 + 1/2 * np.sin(t)))
+    obstacles.append(Obstacle(1/2, lambda t: 6 + 1/2 * np.cos(t + np.pi), lambda t: 2 + 1/2 * np.sin(t + np.pi)))
+
+    obstacles.append(Obstacle(1/2, lambda t: 6 + 1/2 * np.cos(t), lambda t: 4 + 1/2 * np.sin(t)))
+    obstacles.append(Obstacle(1/2, lambda t: 6 + 1/2 * np.cos(t + np.pi), lambda t: 4 + 1/2 * np.sin(t + np.pi)))
+
+    obstacles.append(Obstacle(1/2, lambda t: 8 + 1/2 * np.cos(t + np.pi/2), lambda t: 2 + 1/2 * np.sin(t + np.pi/2)))
+    obstacles.append(Obstacle(1/2, lambda t: 8 + 1/2 * np.cos(t + 3 * np.pi / 2), lambda t: 2 + 1/2 * np.sin(t + 3 * np.pi / 2)))
+
+    obstacles.append(Obstacle(1/2, lambda t: 8 + 1/2 * np.cos(t + np.pi/2), lambda t: 4 + 1/2 * np.sin(t + np.pi/2)))
+    obstacles.append(Obstacle(1/2, lambda t: 8 + 1/2 * np.cos(t + 3 * np.pi / 2), lambda t: 4 + 1/2 * np.sin(t + 3 * np.pi / 2)))
+
+    obstacles.append(Obstacle(1/2, lambda t: 10 + 1/2 * np.cos(t), lambda t: 2 + 1/2 * np.sin(t)))
+    obstacles.append(Obstacle(1/2, lambda t: 10 + 1/2 * np.cos(t + np.pi), lambda t: 2 + 1/2 * np.sin(t + np.pi)))
+
+    obstacles.append(Obstacle(1/2, lambda t: 10 + 1/2 * np.cos(t), lambda t: 4 + 1/2 * np.sin(t)))
+    obstacles.append(Obstacle(1/2, lambda t: 10 + 1/2 * np.cos(t + np.pi), lambda t: 4 + 1/2 * np.sin(t + np.pi)))
+
+    obstacles.append(Obstacle(1/2, lambda t: 12 + 1/2 * np.cos(t + np.pi/2), lambda t: 2 + 1/2 * np.sin(t + np.pi/2)))
+    obstacles.append(Obstacle(1/2, lambda t: 12 + 1/2 * np.cos(t + 3 * np.pi / 2), lambda t: 2 + 1/2 * np.sin(t + 3 * np.pi / 2)))
+
+    obstacles.append(Obstacle(1/2, lambda t: 12 + 1/2 * np.cos(t + np.pi/2), lambda t: 4 + 1/2 * np.sin(t + np.pi/2)))
+    obstacles.append(Obstacle(1/2, lambda t: 12 + 1/2 * np.cos(t + 3 * np.pi / 2), lambda t: 4 + 1/2 * np.sin(t + 3 * np.pi / 2)))
+
+    # Top row
+    obstacles.append(Obstacle(1/2, lambda t: 2 + 1/2 * np.cos(t), lambda t: 6 + 1/2 * np.sin(t)))
+    obstacles.append(Obstacle(1/2, lambda t: 2 + 1/2 * np.cos(t + np.pi), lambda t: 6 + 1/2 * np.sin(t + np.pi)))
+
+    obstacles.append(Obstacle(1/2, lambda t: 2 + 1/2 * np.cos(t), lambda t: 8 + 1/2 * np.sin(t)))
+    obstacles.append(Obstacle(1/2, lambda t: 2 + 1/2 * np.cos(t + np.pi), lambda t: 8 + 1/2 * np.sin(t + np.pi)))
+
+    obstacles.append(Obstacle(1/2, lambda t: 4 + 1/2 * np.cos(t + np.pi/2), lambda t: 6 + 1/2 * np.sin(t + np.pi/2)))
+    obstacles.append(Obstacle(1/2, lambda t: 4 + 1/2 * np.cos(t + 3 * np.pi / 2), lambda t: 6 + 1/2 * np.sin(t + 3 * np.pi / 2)))
+
+    obstacles.append(Obstacle(1/2, lambda t: 4 + 1/2 * np.cos(t + np.pi/2), lambda t: 8 + 1/2 * np.sin(t + np.pi/2)))
+    obstacles.append(Obstacle(1/2, lambda t: 4 + 1/2 * np.cos(t + 3 * np.pi / 2), lambda t: 8 + 1/2 * np.sin(t + 3 * np.pi / 2)))
+
+    obstacles.append(Obstacle(1/2, lambda t: 6 + 1/2 * np.cos(t), lambda t: 6 + 1/2 * np.sin(t)))
+    obstacles.append(Obstacle(1/2, lambda t: 6 + 1/2 * np.cos(t + np.pi), lambda t: 6 + 1/2 * np.sin(t + np.pi)))
+
+    obstacles.append(Obstacle(1/2, lambda t: 6 + 1/2 * np.cos(t), lambda t: 8 + 1/2 * np.sin(t)))
+    obstacles.append(Obstacle(1/2, lambda t: 6 + 1/2 * np.cos(t + np.pi), lambda t: 8 + 1/2 * np.sin(t + np.pi)))
+
+    obstacles.append(Obstacle(1/2, lambda t: 8 + 1/2 * np.cos(t + np.pi/2), lambda t: 6 + 1/2 * np.sin(t + np.pi/2)))
+    obstacles.append(Obstacle(1/2, lambda t: 8 + 1/2 * np.cos(t + 3 * np.pi / 2), lambda t: 6 + 1/2 * np.sin(t + 3 * np.pi / 2)))
+
+    obstacles.append(Obstacle(1/2, lambda t: 8 + 1/2 * np.cos(t + np.pi/2), lambda t: 8 + 1/2 * np.sin(t + np.pi/2)))
+    obstacles.append(Obstacle(1/2, lambda t: 8 + 1/2 * np.cos(t + 3 * np.pi / 2), lambda t: 8 + 1/2 * np.sin(t + 3 * np.pi / 2)))
+
+    obstacles.append(Obstacle(1/2, lambda t: 10 + 1/2 * np.cos(t), lambda t: 6 + 1/2 * np.sin(t)))
+    obstacles.append(Obstacle(1/2, lambda t: 10 + 1/2 * np.cos(t + np.pi), lambda t: 6 + 1/2 * np.sin(t + np.pi)))
+
+    obstacles.append(Obstacle(1/2, lambda t: 10 + 1/2 * np.cos(t), lambda t: 8 + 1/2 * np.sin(t)))
+    obstacles.append(Obstacle(1/2, lambda t: 10 + 1/2 * np.cos(t + np.pi), lambda t: 8 + 1/2 * np.sin(t + np.pi)))
+
+    obstacles.append(Obstacle(1/2, lambda t: 12 + 1/2 * np.cos(t + np.pi/2), lambda t: 6 + 1/2 * np.sin(t + np.pi/2)))
+    obstacles.append(Obstacle(1/2, lambda t: 12 + 1/2 * np.cos(t + 3 * np.pi / 2), lambda t: 6 + 1/2 * np.sin(t + 3 * np.pi / 2)))
+
+    obstacles.append(Obstacle(1/2, lambda t: 12 + 1/2 * np.cos(t + np.pi/2), lambda t: 8 + 1/2 * np.sin(t + np.pi/2)))
+    obstacles.append(Obstacle(1/2, lambda t: 12 + 1/2 * np.cos(t + 3 * np.pi / 2), lambda t: 8 + 1/2 * np.sin(t + 3 * np.pi / 2)))
+
+
+    return obstacles

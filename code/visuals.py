@@ -76,6 +76,7 @@ class Visualization_2D:
             self.DrawState(s, 'ro', linewidth=1)
             for obstacle in obstacles:
                 self.DrawObstacle(obstacle, s.t)
+            plt.title("Time: {}".format(round(s.t, 1)))
             self.ShowFigure()
 
 class Visualization_3D:
