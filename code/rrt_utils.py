@@ -22,7 +22,7 @@ class State:
         return ((self.x - other.x)**2 + (self.y - other.y)**2)
 
     def XYT_DistSquared(self, other, vmax):
-        return ((self.x - other.x)**2 + (self.y - other.y)**2 + (1 / vmax**2) * (self.t - other.t)**2)
+        return ((self.x - other.x)**2 + (self.y - other.y)**2 + (vmax**2) * (self.t - other.t)**2)
 
     def Intermediate(self, other, alpha):
         return State(self.x + alpha * (other.x - self.x),
@@ -85,7 +85,8 @@ class Node:
         self.viz_type = viz_type
 
         # Automatically draw.
-        self.Draw('r-', linewidth=1)
+        if self.viz_type != 0:
+            self.Draw('r-', linewidth=1)
 
     # Draw a line to the parent.
     def Draw(self, *args, **kwargs):
@@ -97,7 +98,7 @@ class Node:
                     self.state.x - self.parent.state.x,
                     self.state.y - self.parent.state.y,
                     scale_units='xy', angles='xy', scale=1, color=(self.state.t/30, 0, 0))
-            else:
+            elif self.viz_type == 3:
                 # 3D Visualization
                 self.viz.ax.quiver(
                     self.parent.state.x, self.parent.state.y, self.parent.state.t,

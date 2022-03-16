@@ -26,9 +26,9 @@ obstacles = obstacles_2()
 # Define parameters for RRT algo
 dstep = 1
 Nmax  = 10000
-goal_prob = 0.25
+goal_prob = 0.15
 
-visual_type = 2
+visual_type = 3
 
 ######################################################################
 #
@@ -134,6 +134,64 @@ def PostProcess(path, viz):
 
     return new_path
 
+def grid_search_main():
+    global dstep
+    global Nmax
+    global goal_prob
+
+    num_rounds = 5
+    results = {}
+    for curr_dstep in [0.5, 1]:
+        for curr_goal_prob in [.05, .10, .25, .50, .75]:
+            for curr_nmax in [10000]:
+                key = (curr_dstep, curr_goal_prob, curr_nmax)
+                print(key)
+
+                # fail rate, avg time of path
+                times = []
+                fails = 0
+
+                for x in range(num_rounds):
+                    print(x)
+                    # Set globals for run
+                    dstep = curr_dstep
+                    Nmax = curr_nmax
+                    goal_prob = curr_goal_prob
+
+                    # Create the start/goal nodes.
+                    startstate = State(startx, starty, 0)
+                    goalstate  = State(goalx,  goaly, tmax)
+
+                    Visual = None
+
+                    # Start the tree with the start state and no parent.
+                    tree = [Node(startstate, None, Visual, visual_type)]
+
+                    # Execute the search (return the goal leaf node).
+                    node = RRT(tree, goalstate, Nmax)
+
+                    # Check the outcome
+                    if node is None:
+                        fails += 1
+                        continue
+
+                    final_time = node.state.t
+                    times.append(final_time)
+
+                    path = []
+                    while node.parent is not None:
+                        path.insert(0, node)
+                        node = node.parent
+                    path.insert(0, node)
+
+                    # Post process path
+                    path = PostProcess(path, Visual)
+
+                results[key] = {"fail_rate": fails/num_rounds, "avg_time": sum(times)/len(times)}
+    print(results)
+
+
+
 #
 #  Main Code
 #
@@ -160,13 +218,15 @@ def main():
 
     # Execute the search (return the goal leaf node).
     node = RRT(tree, goalstate, Nmax)
-    print("Reached goal in {} seconds".format(node.state.t))
+    input("Showing tree (hit return to continue)")
 
     # Check the outcome
     if node is None:
         print("UNABLE TO FIND A PATH in %d steps", Nmax)
         input("(hit return to exit)")
         return
+
+    print("Reached goal in {} seconds".format(node.state.t))
 
     path = []
     while node.parent is not None:
@@ -186,6 +246,10 @@ def main():
     input("Showing the raw path (hit return to continue)")
 
 if __name__== "__main__":
-    for obs in obstacles:
-        print(obs.get_position(1))
     main()
+    # grid_search_main()
+    # Visual = Visualization_2D(xmin, xmax, ymin, ymax)
+    # for obstacle in obstacles:
+    #     Visual.DrawObstacle(obstacle, 0)
+    # Visual.ShowFigure()
+    # input("Showing the obstacles")
